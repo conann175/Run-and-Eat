@@ -1,331 +1,930 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>RUN & EAT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0a0a0f; color: #f0f0f0; font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; padding-bottom: 100px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>おくすり手帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #7a9e87;
+    --sage-light: #a8c4b0;
+    --sage-pale: #e8f0ea;
+    --cream: #faf8f4;
+    --warm-white: #f5f2ec;
+    --text-dark: #2d3a31;
+    --text-mid: #5a6b5e;
+    --text-light: #8fa396;
+    --accent: #c8845a;
+    --accent-light: #f0d5c4;
+    --checked: #4a8c6a;
+    --checked-bg: #d4ede0;
+    --shadow: rgba(60, 80, 65, 0.12);
+  }
 
-    #header { background: linear-gradient(135deg, #111, #1a1a2e); border-bottom: 3px solid #ffd700; padding: 18px 20px 14px; }
-    #header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 4px; color: #ffd700; line-height: 1; }
-    #header p { font-size: 12px; color: #888; margin-top: 2px; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    #main { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-    #km-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid rgba(255,215,0,0.27); border-radius: 16px; padding: 24px 20px; margin-top: 20px; position: relative; overflow: hidden; }
-    #km-card::after { content:''; position:absolute; top:-20px; right:-20px; width:120px; height:120px; background: radial-gradient(circle, rgba(255,215,0,0.13), transparent); border-radius: 50%; }
-    #km-label { font-size: 12px; color: #888; margin-bottom: 6px; }
-    #km-display { display: flex; align-items: baseline; gap: 8px; }
-    #km-num { font-family:'Bebas Neue',sans-serif; font-size: 72px; color: #ffd700; line-height: 1; }
-    #km-unit { font-family:'Bebas Neue',sans-serif; font-size: 28px; color: #888; }
-    #progress-label { display: flex; justify-content: space-between; margin: 16px 0 6px; font-size: 12px; }
-    #progress-label span:first-child { color: #aaa; }
-    #progress-label span:last-child { color: #ffd700; }
-    #progress-bar { background: rgba(255,255,255,0.07); border-radius: 99px; height: 8px; overflow: hidden; }
-    #progress-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 99px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(122,158,135,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 90% 80%, rgba(200,132,90,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-    #tabs { display: flex; gap: 8px; margin-top: 20px; }
-    .tab-btn { flex: 1; padding: 10px 0; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1px solid #333; background: #1a1a2e; color: #666; cursor: pointer; font-family: 'Noto Sans JP'; transition: all 0.2s; }
-    .tab-btn.active { background: #ffd700; color: #0a0a0f; border: none; }
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 80px;
+  }
 
-    .panel { display: none; margin-top: 20px; }
-    .panel.active { display: block; }
+  /* ── Header ── */
+  header {
+    padding: 32px 24px 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text-dark);
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-light);
+    letter-spacing: 0.12em;
+    margin-top: 4px;
+  }
+  .pill-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--sage), var(--sage-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(122,158,135,0.3);
+  }
 
-    .card { background: #1a1a2e; border: 1px solid #333; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-    .card-title { font-size: 13px; color: #888; margin-bottom: 12px; }
-    .card-title.gold { color: #ffd700; font-weight: 700; }
+  /* ── Month Navigation ── */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 0 24px 16px;
+  }
+  .month-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px var(--shadow);
+    color: var(--text-mid);
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .month-btn:hover {
+    background: var(--sage-pale);
+    color: var(--sage);
+    transform: scale(1.08);
+  }
+  .month-label {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-dark);
+    min-width: 150px;
+    text-align: center;
+  }
 
-    #run-row { display: flex; gap: 10px; }
-    #run-wrap { flex: 1; position: relative; }
-    #run-input { width: 100%; background: #0a0a0f; border: 2px solid #333; border-radius: 10px; padding: 14px 50px 14px 16px; color: #fff; font-size: 28px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; outline: none; -webkit-appearance: none; }
-    #run-km-label { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #555; font-family: 'Bebas Neue'; font-size: 18px; }
-    #run-btn { background: #ffd700; color: #0a0a0f; border-radius: 10px; padding: 0 22px; font-size: 24px; font-weight: 900; cursor: pointer; border: none; font-family: 'Noto Sans JP'; }
-    #run-btn:active { transform: scale(0.95); }
+  /* ── Calendar ── */
+  .calendar-card {
+    margin: 0 16px;
+    background: white;
+    border-radius: 24px;
+    padding: 20px 16px;
+    box-shadow: 0 4px 24px var(--shadow);
+  }
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+  }
+  .weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    padding: 6px 0;
+  }
+  .weekday.sun { color: #c07070; }
+  .weekday.sat { color: #7080c0; }
 
-    #earned-title { font-size: 13px; color: #888; margin: 24px 0 12px; }
-    .earned-card { background: linear-gradient(135deg, #1a2a1a, #1a3a1a); border: 1px solid rgba(76,175,80,0.27); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; animation: pulse 2s infinite; }
-    .food-name { font-weight: 700; color: #7fff7f; font-size: 16px; }
-    .food-km { font-size: 12px; color: #4ab87a; }
-    #empty-earned { text-align: center; color: #444; padding: 30px; border: 1px dashed #222; border-radius: 12px; font-size: 13px; line-height: 1.8; }
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
 
-    #goal-form-row1 { display: flex; gap: 8px; margin-bottom: 10px; }
-    #emoji-input { width: 52px; background: #0a0a0f; border: 1px solid #333; border-radius: 8px; padding: 10px; color: #fff; font-size: 22px; text-align: center; outline: none; }
-    #food-input { flex: 1; background: #0a0a0f; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 14px; font-family: 'Noto Sans JP'; outline: none; }
-    #goal-form-row2 { display: flex; gap: 8px; }
-    #km-input-wrap { flex: 1; position: relative; }
-    #km-goal-input { width: 100%; background: #0a0a0f; border: 1px solid #333; border-radius: 8px; padding: 10px 36px 10px 14px; color: #fff; font-size: 14px; font-family: 'Noto Sans JP'; outline: none; -webkit-appearance: none; }
-    #km-input-unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #555; font-size: 12px; }
-    #add-goal-btn { background: #ffd700; color: #0a0a0f; border-radius: 8px; padding: 0 20px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: 'Noto Sans JP'; }
-    #add-goal-btn:active { transform: scale(0.95); }
+  .day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    gap: 2px;
+  }
+  .day-cell:not(.empty):hover {
+    background: var(--sage-pale);
+    transform: scale(1.05);
+  }
+  .day-cell.empty { cursor: default; }
 
-    .goal-item { border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(51,51,51,0.53); background: #1a1a2e; }
-    .goal-item.earned { background: #1a2a1a; border-color: rgba(76,175,80,0.27); }
-    .goal-name { font-weight: 700; }
-    .goal-name.earned { color: #7fff7f; }
-    .goal-km-text { font-family: 'Bebas Neue'; font-size: 20px; color: #ffd700; letter-spacing: 1px; }
-    .goal-km-text.earned { color: #4caf50; }
-    .mini-bar { background: rgba(255,255,255,0.07); border-radius: 99px; height: 4px; margin-top: 4px; overflow: hidden; }
-    .mini-fill { height: 100%; background: #ffd700; border-radius: 99px; }
-    .del-btn { background: rgba(255,255,255,0.07); color: #666; border: 1px solid #333; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans JP'; flex-shrink: 0; }
-    .del-btn:active { background: #ff4444; color: #fff; }
+  .day-num {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-dark);
+    line-height: 1;
+  }
+  .day-cell.sunday .day-num { color: #c07070; }
+  .day-cell.saturday .day-num { color: #7080c0; }
+  .day-cell.other-month .day-num { color: #ccc; }
 
-    #reset-btn { width: 100%; margin-top: 20px; padding: 14px; background: transparent; border: 1px solid rgba(255,68,68,0.27); border-radius: 10px; color: #ff6666; font-size: 13px; cursor: pointer; font-family: 'Noto Sans JP'; }
+  .day-cell.today {
+    background: var(--sage-pale);
+  }
+  .day-cell.today .day-num {
+    font-weight: 700;
+    color: var(--sage);
+  }
 
-    #log-title { font-size: 13px; color: #888; margin-bottom: 12px; }
-    .log-item { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
-    .log-km { font-family: 'Bebas Neue'; font-size: 28px; color: #ffd700; min-width: 60px; }
-    .log-km span { font-size: 14px; color: #666; }
-    .log-date { font-size: 12px; color: #666; }
-    .log-num { font-size: 11px; color: #444; margin-left: auto; }
-    #empty-log { text-align: center; color: #444; padding: 40px; border: 1px dashed #222; border-radius: 12px; }
+  .day-cell.checked {
+    background: var(--checked-bg);
+  }
+  .day-cell.checked .day-num {
+    color: var(--checked);
+    font-weight: 500;
+  }
 
-    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 99px; font-size: 14px; font-weight: 700; z-index: 100; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: none; animation: slideIn 0.3s ease; font-family: 'Noto Sans JP'; }
+  .check-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--checked);
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .day-cell.checked .check-dot {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
-    @keyframes slideIn { from{transform:translate(-50%,-20px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
+  .today-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
 
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-    input::placeholder { color: #444; }
-  </style>
+  /* ── Stats Bar ── */
+  .stats-bar {
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+  .stat-item + .stat-item {
+    border-left: 1px solid var(--sage-pale);
+  }
+  .stat-num {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--sage);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-light);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+  .progress-bar {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-light);
+    letter-spacing: 0.06em;
+  }
+  .progress-track {
+    height: 8px;
+    background: var(--sage-pale);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sage), var(--sage-light));
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ── Alarm Card ── */
+  .alarm-card {
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+  .alarm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .alarm-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mid);
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alarm-title::before {
+    content: '🔔';
+    font-size: 16px;
+  }
+
+  .alarm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .alarm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--warm-white);
+    border-radius: 14px;
+    padding: 12px 14px;
+    transition: all 0.2s;
+  }
+  .alarm-time {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-dark);
+    flex: 1;
+    letter-spacing: 0.04em;
+  }
+  .alarm-label-text {
+    font-size: 11px;
+    color: var(--text-light);
+  }
+  .alarm-toggle {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: #ddd;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: none;
+    outline: none;
+    flex-shrink: 0;
+  }
+  .alarm-toggle.on { background: var(--sage); }
+  .alarm-toggle::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .alarm-toggle.on::after { transform: translateX(18px); }
+
+  .alarm-delete {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .alarm-delete:hover { background: #fee; color: #e77; }
+
+  .add-alarm-btn {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed var(--sage-light);
+    background: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    color: var(--sage);
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+    margin-top: 10px;
+  }
+  .add-alarm-btn:hover {
+    background: var(--sage-pale);
+    border-color: var(--sage);
+  }
+
+  /* ── Modals ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 45, 35, 0.4);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal {
+    background: white;
+    border-radius: 28px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+  }
+  .overlay.show .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .modal-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    letter-spacing: 0.04em;
+  }
+  .modal-body {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  .modal-date {
+    display: inline-block;
+    background: var(--sage-pale);
+    color: var(--sage);
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .btn-cancel {
+    background: var(--warm-white);
+    color: var(--text-mid);
+  }
+  .btn-cancel:hover { background: #eee; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--sage), var(--sage-light));
+    color: white;
+    box-shadow: 0 4px 12px rgba(122,158,135,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(122,158,135,0.4); }
+  .btn-danger {
+    background: linear-gradient(135deg, #d97a6a, #e9997c);
+    color: white;
+    box-shadow: 0 4px 12px rgba(217,122,106,0.35);
+  }
+  .btn-danger:hover { transform: translateY(-1px); }
+
+  /* ── Time Picker Modal ── */
+  .time-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+  }
+  .time-input {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 36px;
+    font-weight: 600;
+    width: 80px;
+    text-align: center;
+    border: 2px solid var(--sage-pale);
+    border-radius: 16px;
+    padding: 10px 4px;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--warm-white);
+  }
+  .time-input:focus { border-color: var(--sage); background: white; }
+  .time-sep {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 32px;
+    color: var(--text-mid);
+    margin-bottom: 4px;
+  }
+  .alarm-name-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--sage-pale);
+    border-radius: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--warm-white);
+    margin-bottom: 8px;
+  }
+  .alarm-name-input:focus { border-color: var(--sage); background: white; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text-dark);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
 </head>
 <body>
+<div class="app">
 
-<div id="header">
-  <h1>RUN & EAT</h1>
-  <p>走った分だけ食べていい</p>
-</div>
+  <!-- Header -->
+  <header>
+    <div>
+      <div class="header-title">おくすり手帳</div>
+      <div class="header-sub">MEDICINE TRACKER</div>
+    </div>
+    <div class="pill-icon">💊</div>
+  </header>
 
-<div id="main">
-  <div id="km-card">
-    <div id="km-label">🏃 累計走行距離</div>
-    <div id="km-display">
-      <span id="km-num">0.0</span>
-      <span id="km-unit">KM</span>
-    </div>
-    <div id="progress-label">
-      <span id="next-label">次の目標: —</span>
-      <span id="next-remain">—</span>
-    </div>
-    <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+  <!-- Month Navigation -->
+  <div class="month-nav">
+    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="month-btn" onclick="changeMonth(1)">›</button>
   </div>
 
-  <div id="tabs">
-    <button class="tab-btn active" onclick="switchTab('run')">🏃 記録</button>
-    <button class="tab-btn" onclick="switchTab('goals')">🎯 目標</button>
-    <button class="tab-btn" onclick="switchTab('log')">📋 履歴</button>
+  <!-- Calendar -->
+  <div class="calendar-card">
+    <div class="weekdays">
+      <div class="weekday sun">日</div>
+      <div class="weekday">月</div>
+      <div class="weekday">火</div>
+      <div class="weekday">水</div>
+      <div class="weekday">木</div>
+      <div class="weekday">金</div>
+      <div class="weekday sat">土</div>
+    </div>
+    <div class="days-grid" id="daysGrid"></div>
   </div>
 
-  <!-- Run Panel -->
-  <div id="panel-run" class="panel active">
-    <div class="card">
-      <div class="card-title">走った距離を入力</div>
-      <div id="run-row">
-        <div id="run-wrap">
-          <input id="run-input" type="number" inputmode="decimal" placeholder="0.0" min="0" step="0.1" />
-          <span id="run-km-label">KM</span>
-        </div>
-        <button id="run-btn" onclick="addRun()">＋</button>
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="statChecked">0</div>
+      <div class="stat-label">服薬済み</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statDays">0</div>
+      <div class="stat-label">経過日数</div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-label">
+        <span>今月の服薬率</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
       </div>
     </div>
-    <div id="earned-title">🏆 獲得済みのご褒美</div>
-    <div id="earned-list"></div>
   </div>
 
-  <!-- Goals Panel -->
-  <div id="panel-goals" class="panel">
-    <div class="card">
-      <div class="card-title gold">＋ 新しい目標を追加</div>
-      <div id="goal-form-row1">
-        <input id="emoji-input" type="text" placeholder="🍔" maxlength="2" />
-        <input id="food-input" type="text" placeholder="食べ物の名前" />
-      </div>
-      <div id="goal-form-row2">
-        <div id="km-input-wrap">
-          <input id="km-goal-input" type="number" inputmode="decimal" placeholder="目標km" min="0.1" step="0.1" />
-          <span id="km-input-unit">km</span>
-        </div>
-        <button id="add-goal-btn" onclick="addGoal()">追加</button>
-      </div>
+  <!-- Alarm Card -->
+  <div class="alarm-card">
+    <div class="alarm-header">
+      <div class="alarm-title">服薬アラーム</div>
     </div>
-    <div id="goals-list"></div>
-    <button id="reset-btn" onclick="resetData()">🔄 データをリセット</button>
-  </div>
-
-  <!-- Log Panel -->
-  <div id="panel-log" class="panel">
-    <div id="log-title">直近30件の記録</div>
-    <div id="log-list"></div>
+    <div class="alarm-list" id="alarmList"></div>
+    <button class="add-alarm-btn" onclick="openAddAlarm()">＋ アラームを追加</button>
   </div>
 </div>
 
-<div id="toast"></div>
+<!-- Uncheck Confirm Modal -->
+<div class="overlay" id="uncheckOverlay">
+  <div class="modal">
+    <span class="modal-icon">🤔</span>
+    <div class="modal-title">チェックを外しますか？</div>
+    <div class="modal-body">
+      <span class="modal-date" id="uncheckDate"></span><br>
+      の服薬記録を削除します。
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeUncheck()">キャンセル</button>
+      <button class="btn btn-danger" onclick="confirmUncheck()">外す</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Alarm Modal -->
+<div class="overlay" id="alarmOverlay">
+  <div class="modal">
+    <span class="modal-icon">⏰</span>
+    <div class="modal-title">アラームを設定</div>
+    <div class="time-picker">
+      <input class="time-input" id="alarmHour" type="number" min="0" max="23" value="08">
+      <span class="time-sep">:</span>
+      <input class="time-input" id="alarmMin" type="number" min="0" max="59" value="00">
+    </div>
+    <input class="alarm-name-input" id="alarmName" type="text" placeholder="ラベル（例：朝の薬）">
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeAlarm()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveAlarm()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script>
-  const STORAGE_KEY = 'run-eat-app';
-  const DEFAULT_GOALS = [
-    { id: 1, km: 5,  food: 'ラーメン', emoji: '🍜', earned: false },
-    { id: 2, km: 10, food: 'ピザ',     emoji: '🍕', earned: false },
-    { id: 3, km: 21, food: '焼肉',     emoji: '🥩', earned: false },
-  ];
+// ── State ──
+const today = new Date();
+let viewYear = today.getFullYear();
+let viewMonth = today.getMonth();
+let checkedDates = JSON.parse(localStorage.getItem('checkedDates') || '{}');
+let alarms = JSON.parse(localStorage.getItem('alarms') || '[]');
+let pendingUncheck = null;
+let alarmTimers = [];
 
-  let state = { totalKm: 0, goals: JSON.parse(JSON.stringify(DEFAULT_GOALS)), logs: [] };
-  let animKm = 0, animTimer = null;
+// ── Helpers ──
+function dateKey(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function saveChecked() {
+  localStorage.setItem('checkedDates', JSON.stringify(checkedDates));
+}
+function saveAlarms() {
+  localStorage.setItem('alarms', JSON.stringify(alarms));
+}
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
 
-  function load() {
-    try {
-      const s = localStorage.getItem(STORAGE_KEY);
-      if (s) state = JSON.parse(s);
-    } catch(e) {}
+// ── Calendar ──
+function renderCalendar() {
+  const ml = document.getElementById('monthLabel');
+  ml.textContent = `${viewYear}年 ${viewMonth + 1}月`;
+
+  const grid = document.getElementById('daysGrid');
+  grid.innerHTML = '';
+
+  const first = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prevDays = new Date(viewYear, viewMonth, 0).getDate();
+
+  // Previous month days
+  for (let i = first - 1; i >= 0; i--) {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell other-month empty';
+    cell.innerHTML = `<span class="day-num">${prevDays - i}</span><div class="check-dot"></div>`;
+    grid.appendChild(cell);
   }
 
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    const key = dateKey(viewYear, viewMonth, d);
+    const dow = new Date(viewYear, viewMonth, d).getDay();
+    const isToday = (viewYear === today.getFullYear() && viewMonth === today.getMonth() && d === today.getDate());
+    const isChecked = !!checkedDates[key];
+
+    let cls = 'day-cell';
+    if (dow === 0) cls += ' sunday';
+    if (dow === 6) cls += ' saturday';
+    if (isToday) cls += ' today';
+    if (isChecked) cls += ' checked';
+
+    cell.className = cls;
+    cell.innerHTML = `
+      ${isToday ? '<div class="today-badge"></div>' : ''}
+      <span class="day-num">${d}</span>
+      <div class="check-dot"></div>
+    `;
+    cell.addEventListener('click', () => handleDayClick(d, key, cell));
+    grid.appendChild(cell);
   }
 
-  function animateTo(target) {
-    if (animTimer) clearInterval(animTimer);
-    const start = animKm, diff = target - start;
-    let i = 0;
-    animTimer = setInterval(() => {
-      i++;
-      animKm = parseFloat((start + diff * (i / 30)).toFixed(2));
-      document.getElementById('km-num').textContent = animKm.toFixed(1);
-      if (i >= 30) { animKm = target; clearInterval(animTimer); }
-    }, 16);
+  // Fill remaining cells
+  const total = first + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remaining; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell other-month empty';
+    cell.innerHTML = `<span class="day-num">${i}</span><div class="check-dot"></div>`;
+    grid.appendChild(cell);
   }
 
-  function render() {
-    animateTo(state.totalKm);
+  updateStats();
+}
 
-    const next = state.goals.find(g => !g.earned);
-    if (next) {
-      const pct = Math.min((state.totalKm / next.km) * 100, 100);
-      document.getElementById('next-label').textContent  = `次の目標: ${next.emoji} ${next.food} まで`;
-      document.getElementById('next-remain').textContent = `${Math.max(0, next.km - state.totalKm).toFixed(1)}km`;
-      document.getElementById('progress-fill').style.width = pct + '%';
-    } else {
-      document.getElementById('next-label').textContent  = '全目標達成！🎉';
-      document.getElementById('next-remain').textContent = '';
-      document.getElementById('progress-fill').style.width = '100%';
-    }
+function handleDayClick(d, key, cell) {
+  if (checkedDates[key]) {
+    // Uncheck: confirm
+    pendingUncheck = { key, cell };
+    const dow = new Date(viewYear, viewMonth, d).getDay();
+    const dayNames = ['日','月','火','水','木','金','土'];
+    document.getElementById('uncheckDate').textContent =
+      `${viewYear}年${viewMonth+1}月${d}日（${dayNames[dow]}）`;
+    document.getElementById('uncheckOverlay').classList.add('show');
+  } else {
+    // Check
+    checkedDates[key] = true;
+    saveChecked();
+    cell.classList.add('checked');
+    updateStats();
+    showToast('✅ 服薬を記録しました');
+  }
+}
 
-    // Earned
-    const earned = state.goals.filter(g => g.earned);
-    document.getElementById('earned-list').innerHTML = earned.length === 0
-      ? `<div id="empty-earned">まだ獲得していません<br>走って食べ物をゲットしよう！</div>`
-      : earned.map(g => `
-          <div class="earned-card">
-            <span style="font-size:32px">${g.emoji}</span>
-            <div><div class="food-name">${g.food}</div><div class="food-km">${g.km}km 達成 ✓</div></div>
-            <span style="margin-left:auto;font-size:24px">✅</span>
-          </div>`).join('');
+function changeMonth(dir) {
+  viewMonth += dir;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  renderCalendar();
+}
 
-    // Goals
-    document.getElementById('goals-list').innerHTML = [...state.goals]
-      .sort((a,b) => a.km - b.km)
-      .map(g => {
-        const pct = Math.min((state.totalKm / g.km) * 100, 100);
-        return `
-          <div class="goal-item ${g.earned ? 'earned' : ''}">
-            <span style="font-size:28px">${g.emoji}</span>
-            <div style="flex:1">
-              <div class="goal-name ${g.earned ? 'earned' : ''}">${g.food}</div>
-              <div class="goal-km-text ${g.earned ? 'earned' : ''}">${g.km} KM ${g.earned ? '✓' : ''}</div>
-              ${!g.earned ? `<div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>` : ''}
-            </div>
-            <button class="del-btn" onclick="deleteGoal(${g.id})">削除</button>
-          </div>`;
-      }).join('');
+// ── Uncheck Modal ──
+function closeUncheck() {
+  document.getElementById('uncheckOverlay').classList.remove('show');
+  pendingUncheck = null;
+}
+function confirmUncheck() {
+  if (!pendingUncheck) return;
+  const { key, cell } = pendingUncheck;
+  delete checkedDates[key];
+  saveChecked();
+  cell.classList.remove('checked');
+  updateStats();
+  closeUncheck();
+  showToast('チェックを外しました');
+}
 
-    // Logs
-    document.getElementById('log-list').innerHTML = state.logs.length === 0
-      ? `<div id="empty-log">まだ記録がありません</div>`
-      : state.logs.map((l, i) => `
-          <div class="log-item">
-            <div class="log-km">${l.km}<span>km</span></div>
-            <div style="flex:1"><div class="log-date">${l.date} ${l.time}</div></div>
-            <div class="log-num">#${state.logs.length - i}</div>
-          </div>`).join('');
+// ── Stats ──
+function updateStats() {
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  let checked = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (checkedDates[dateKey(viewYear, viewMonth, d)]) checked++;
   }
 
-  function addRun() {
-    const val = parseFloat(document.getElementById('run-input').value);
-    if (!val || val <= 0) return showToast('正しい距離を入力してください', 'error');
-    const newTotal = parseFloat((state.totalKm + val).toFixed(2));
+  // Elapsed days in month
+  let elapsed = daysInMonth;
+  if (viewYear === today.getFullYear() && viewMonth === today.getMonth()) {
+    elapsed = today.getDate();
+  } else if (viewYear > today.getFullYear() || (viewYear === today.getFullYear() && viewMonth > today.getMonth())) {
+    elapsed = 0;
+  }
+
+  const pct = elapsed > 0 ? Math.round((checked / elapsed) * 100) : 0;
+
+  document.getElementById('statChecked').textContent = checked;
+  document.getElementById('statDays').textContent = elapsed;
+  document.getElementById('progressPct').textContent = `${pct}%`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+// ── Alarms ──
+function renderAlarms() {
+  const list = document.getElementById('alarmList');
+  list.innerHTML = '';
+  alarms.forEach((alarm, i) => {
+    const item = document.createElement('div');
+    item.className = 'alarm-item';
+    item.innerHTML = `
+      <div style="flex:1">
+        <div class="alarm-time">${String(alarm.hour).padStart(2,'0')}:${String(alarm.min).padStart(2,'0')}</div>
+        <div class="alarm-label-text">${alarm.label || '毎日'}</div>
+      </div>
+      <button class="alarm-toggle ${alarm.on ? 'on' : ''}" data-idx="${i}" onclick="toggleAlarm(${i})"></button>
+      <button class="alarm-delete" onclick="deleteAlarm(${i})">×</button>
+    `;
+    list.appendChild(item);
+  });
+  scheduleAlarms();
+}
+
+function openAddAlarm() {
+  document.getElementById('alarmHour').value = '08';
+  document.getElementById('alarmMin').value = '00';
+  document.getElementById('alarmName').value = '';
+  document.getElementById('alarmOverlay').classList.add('show');
+}
+function closeAlarm() {
+  document.getElementById('alarmOverlay').classList.remove('show');
+}
+function saveAlarm() {
+  let h = parseInt(document.getElementById('alarmHour').value);
+  let m = parseInt(document.getElementById('alarmMin').value);
+  if (isNaN(h) || h < 0 || h > 23) h = 8;
+  if (isNaN(m) || m < 0 || m > 59) m = 0;
+  const label = document.getElementById('alarmName').value.trim() || '毎日';
+  alarms.push({ hour: h, min: m, label, on: true });
+  saveAlarms();
+  renderAlarms();
+  closeAlarm();
+  showToast(`⏰ ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} にアラームを設定しました`);
+  requestNotifPerm();
+}
+function toggleAlarm(i) {
+  alarms[i].on = !alarms[i].on;
+  saveAlarms();
+  renderAlarms();
+  showToast(alarms[i].on ? '🔔 アラームをオンにしました' : '🔕 アラームをオフにしました');
+}
+function deleteAlarm(i) {
+  alarms.splice(i, 1);
+  saveAlarms();
+  renderAlarms();
+  showToast('アラームを削除しました');
+}
+
+// ── Notification / Alarm ──
+function requestNotifPerm() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function scheduleAlarms() {
+  alarmTimers.forEach(clearTimeout);
+  alarmTimers = [];
+
+  alarms.forEach(alarm => {
+    if (!alarm.on) return;
     const now = new Date();
-    state.logs.unshift({
-      id: Date.now(), km: val,
-      date: now.toLocaleDateString('ja-JP'),
-      time: now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' })
+    let next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), alarm.hour, alarm.min, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    const delay = next - now;
+
+    const t = setTimeout(() => {
+      fireAlarm(alarm.label || '服薬の時間');
+      // Reschedule for next day
+      scheduleAlarms();
+    }, delay);
+    alarmTimers.push(t);
+  });
+}
+
+function fireAlarm(label) {
+  // Browser Notification
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('💊 ' + label, {
+      body: '薬を飲む時間です！',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y="52" font-size="52">💊</text></svg>'
     });
-    if (state.logs.length > 30) state.logs.pop();
-    state.totalKm = newTotal;
-    document.getElementById('run-input').value = '';
-
-    const newly = state.goals.filter(g => !g.earned && newTotal >= g.km);
-    newly.forEach(g => { state.goals.find(x => x.id === g.id).earned = true; });
-
-    save();
-    newly.length > 0
-      ? showToast(`🎉 ${newly.map(g => g.food).join('・')} を獲得！`, 'reward')
-      : showToast(`✅ ${val}km 追加しました！`);
-    render();
   }
-
-  function addGoal() {
-    const km   = parseFloat(document.getElementById('km-goal-input').value);
-    const food = document.getElementById('food-input').value.trim();
-    const emoji = document.getElementById('emoji-input').value.trim() || '🍔';
-    if (!km || !food) return showToast('距離と食べ物を入力してください', 'error');
-    state.goals.push({ id: Date.now(), km, food, emoji, earned: state.totalKm >= km });
-    document.getElementById('km-goal-input').value = '';
-    document.getElementById('food-input').value    = '';
-    document.getElementById('emoji-input').value   = '';
-    save();
-    showToast('目標を追加しました！');
-    render();
-  }
-
-  function deleteGoal(id) {
-    state.goals = state.goals.filter(g => g.id !== id);
-    save();
-    render();
-  }
-
-  function resetData() {
-    if (!confirm('データをリセットしますか？')) return;
-    state = { totalKm: 0, goals: JSON.parse(JSON.stringify(DEFAULT_GOALS)), logs: [] };
-    animKm = 0;
-    save();
-    render();
-  }
-
-  function showToast(msg, type = 'success') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.style.background = type === 'reward' ? '#ffd700' : type === 'error' ? '#ff4444' : '#333';
-    el.style.color = type === 'reward' ? '#0a0a0f' : '#fff';
-    el.style.display = 'block';
-    el.style.animation = 'none';
-    void el.offsetWidth;
-    el.style.animation = 'slideIn 0.3s ease';
-    setTimeout(() => { el.style.display = 'none'; }, 3000);
-  }
-
-  function switchTab(name) {
-    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-      btn.classList.toggle('active', ['run','goals','log'][i] === name);
+  // In-app toast
+  showToast(`🔔 ${label}の時間です！`, 5000);
+  // Audio beep
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(t => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.3);
     });
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + name).classList.add('active');
-  }
+  } catch(e) {}
+}
 
-  load();
-  render();
+// ── Init ──
+renderCalendar();
+renderAlarms();
+requestNotifPerm();
 </script>
 </body>
 </html>
